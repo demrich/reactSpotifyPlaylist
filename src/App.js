@@ -101,7 +101,10 @@ componentDidMount = () => {
 };
 
   render() {
-
+let playlistsToRender = this.state.serverData.user ? this.state.serverData.user.playlists.filter( playlist =>
+  playlist.name.toLowerCase().includes(
+    this.state.filterString.toLowerCase())
+) : []
     return (
       <div className="App">
       
@@ -111,19 +114,16 @@ componentDidMount = () => {
         {this.state.serverData.user.name}
          </h1>
         <PlayListCounter playlists={
-            this.state.serverData.user.playlists
+            playlistsToRender
         }/>    
         <HourCounter  playlists ={
-            this.state.serverData.user.playlists
+            playlistsToRender
 
         }/> 
         
         <Filter onTextChange={text => this.setState({filterString: text})} /> 
 
-        {this.state.serverData.user.playlists.filter( playlist =>
-          playlist.name.toLowerCase().includes(
-            this.state.filterString.toLowerCase())
-        ).map((playlist) => 
+        {playlistsToRender.map((playlist) => 
         <PlayList playlist={playlist} />)}
 
         </div> : <h1 className="App-title">Loading...</h1>
