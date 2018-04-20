@@ -3,17 +3,31 @@ import './App.css';
 import queryString from 'query-string';
 
 
-let fakeServerData = {
-  user: {
-    name: 'Matthew',
-    playlists: [
-      {
-        name: 'My favorites',
-        songs: [{name:'beat off', duration:12345}, {name:'what the fuck', duration:23415}, {name: 'woah holy shit', duration:945374} ]
-      }
-    ]
-  }
-};
+// let fakeServerData = {
+//   user: {
+//     name: 'Matthew',
+//     playlists: [
+//       {
+//         name: 'My favorites',
+//         songs: [{name:'beat off', duration:12345}, {name:'what the fuck', duration:23415}, {name: 'woah holy shit', duration:945374} ]
+//       }
+//     ]
+//   }
+// };
+
+function ProfilePic(props) {
+  return(
+    <a href={props.profile} target="_blank"><img src={props.image} alt='profile pic' /></a>
+  )
+}
+
+function ProfileName(props) {
+  return(
+    <h1>Hello, {props.name}</h1>
+  )
+}
+
+
   
 class PlayListCounter extends Component {
   render() {
@@ -47,12 +61,31 @@ class Filter extends Component {
   render() {
     return (
       <div>
-        <img />
         <input type="text" onKeyUp={event => 
           this.props.onTextChange(event.target.value)} />
       </div>
     );
   }
+}
+// Image for Playlists
+function PlaylistImage(props) {
+  return( 
+    <a href={props.link} target="_blank"><img src={props.image} alt="playlist pic" /> </a>
+  )
+}
+
+// Songs and Titles 
+function PlaylistListing(props) {
+  return(
+   <div>
+    <h3>{props.name}</h3>
+    <ul>
+    {props.songs.map(song =>
+      <li>{song.name}</li>
+    )}
+    </ul>
+   </div>
+  )
 }
 
 class PlayList extends Component {
@@ -60,26 +93,20 @@ class PlayList extends Component {
     let playlist = this.props.playlist;
     return (
       <div style = {{width : '25%', display : 'inline-block'}}>
-      <img src={playlist.image} />
-      <h3>{playlist.name}</h3>
-      <ul>
-          {playlist.songs.map(song =>
-            <li>{song.name}</li>
-          )}
-      </ul>
+      <PlaylistImage link={playlist.link} image="https://fakeimg.pl/60/" />
+      <PlaylistListing name={playlist.name} songs={playlist.songs} />
       </div>
     );
   }
 }
  
 class App extends Component {
-constructor() {
-    super();
+constructor(props) {
+    super(props);
     this.state = {
       serverData: {},
       filterString:'',
-      image:''
-   }
+    }
 }
 componentDidMount(){
   let parsed = queryString.parse(window.location.search);
@@ -87,7 +114,7 @@ componentDidMount(){
   if(!accessToken)
   return;
 
-{/* Pulls the Username */}
+// Pull Username
   fetch('https://api.spotify.com/v1/me', {
     headers: {
     'Authorization': 'Bearer ' + accessToken
@@ -98,7 +125,9 @@ componentDidMount(){
      this.setState({
        user: {
         name: data.display_name,
-        id: data.id
+        id: data.id,
+        image: data.images[0].url,
+        profile: data.external_urls.spotify
       }
       })
     });
@@ -113,8 +142,8 @@ componentDidMount(){
         return {
         name: item.name,
         id: item.id, 
+        link: item.external_urls.spotify,
         songs: [],
-        image: 'https://fakeimg.pl/60/',
         }
       })
      })
@@ -133,8 +162,8 @@ let playlistsToRender =
       <div className="App">
         {this.state.user ? 
           <div>
-            <h1 className="App-title">Hello, {this.state.user.name}
-            </h1>
+            <ProfilePic image={this.state.user.image} profile={this.state.user.profile} />
+            <ProfileName name={this.state.user.name} />
             <PlayListCounter playlists={playlistsToRender}/> 
             <HourCounter  playlists ={playlistsToRender}/> 
             <Filter onTextChange={text => this.setState({filterString: text})} /> 
