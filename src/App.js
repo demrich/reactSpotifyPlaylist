@@ -119,9 +119,6 @@ componentDidMount(){
       })
      })
     )
-
-
-
 };
 
   render() {
@@ -145,8 +142,11 @@ let playlistsToRender =
             { /* maps out playlist */ }
             {playlistsToRender.map((playlist) => 
             <PlayList key={playlist.id} playlist={playlist} />)}
-          </div> : <h1 className="App-title"><button onClick={ ()=> window.location = 'http://localhost:8888/login' }>Sign in with Spotify</button></h1>
-
+          </div> : <button onClick={()=> {
+            window.location = window.location.href.includes('localhost') 
+            ? 'http://localhost:8888/login' 
+            : 'https://react-spotify-playlist.herokuapp.com/login'}
+            }>Sign in with Spotify</button>
       }
       </div>
     );
