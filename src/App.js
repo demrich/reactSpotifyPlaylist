@@ -145,7 +145,7 @@ let playlistsToRender =
           </div> : <button onClick={()=> {
             window.location = window.location.href.includes('localhost') 
             ? 'http://localhost:8888/login' 
-            : 'https://react-spotify-playlist.herokuapp.com/login'}
+            : 'https://spotify-playlist-backend.herokuapp.com/login'}
             }>Sign in with Spotify</button>
       }
       </div>
