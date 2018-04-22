@@ -27,13 +27,11 @@ function ProfileName(props) {
   )
 }
 
-
-  
 class PlayListCounter extends Component {
   render() {
     return (
       <div style ={{width : '40%', display: 'inline-block'}}>
-      <h2>{this.props.playlists.length}</h2>
+      <h2>{this.props.playlists.length} Playlists</h2>
       </div>
     );
     }
@@ -46,12 +44,12 @@ class HourCounter extends Component {
     }, [])
 
     let totalDuration = totalSongs.reduce((sum, eachSong) =>{
-      return Math.round((sum + eachSong.duration)/60)
+      return sum + eachSong.duration
     }, 0)
 
     return (
       <div style ={{width : '40%', display: 'inline-block'}}>
-      <h2>{totalDuration} hours</h2>
+      <h2>{Math.round(totalDuration/60)} Hours</h2>
       </div>
     );
     }
@@ -81,7 +79,7 @@ function PlaylistListing(props) {
     <h3>{props.name}</h3>
     <ul>
     {props.songs.map(song =>
-      <li>{song.name}</li>
+      <li>{song.name} - {song.artist}</li>
     )}
     </ul>
    </div>
@@ -114,7 +112,7 @@ componentDidMount(){
   if(!accessToken)
   return;
 
-// Pull Username
+// Pull User Info
   fetch('https://api.spotify.com/v1/me', {
     headers: {
     'Authorization': 'Bearer ' + accessToken
@@ -132,18 +130,49 @@ componentDidMount(){
       })
     });
     
+  //Pull Playlist Info
   fetch('https://api.spotify.com/v1/me/playlists', {
-    headers: {
-    'Authorization': 'Bearer ' + accessToken
-    }})
+    headers: {'Authorization': 'Bearer ' + accessToken}
+  })
     .then((response) =>response.json())
-    .then(data => this.setState({
-      playlists: data.items.map(item => {
+
+    .then(playlistData => {
+      let playlists = playlistData.items
+      let trackDataPromises = playlists.map(playlist =>{
+        let responsePromise = fetch(playlist.tracks.href, {
+          headers: {'Authorization': 'Bearer ' + accessToken}
+        })
+        let trackDataPromise = responsePromise
+        .then((response) =>response.json())
+        return trackDataPromise
+      })
+
+      let allTracksDatasPromises =  Promise.all(trackDataPromises)
+
+      let playlistsPromise = allTracksDatasPromises.then(trackDatas => {
+        trackDatas.forEach((trackData, i) => {
+          playlists[i].trackDatas = trackData.items
+          .map(item => item.track)
+          .map(trackData => {
+            return ({
+            artist: trackData.artists[0].name,
+            name: trackData.name,
+            duration: trackData.duration_ms/1000
+
+          })})
+        })
+        return playlists
+      })
+      return playlistsPromise
+    })
+    .then(playlists => this.setState({
+      playlists: playlists.map(item => {
+        console.log(item.name)
         return {
         name: item.name,
         id: item.id, 
         link: item.external_urls.spotify,
-        songs: [],
+        songs: item.trackDatas.slice(0,3)
         }
       })
      })
@@ -153,10 +182,15 @@ componentDidMount(){
   render() {
 let playlistsToRender = 
   this.state.user && this.state.playlists ? 
-  this.state.playlists.filter( playlist =>
-  playlist.name.toLowerCase().includes(
-  this.state.filterString.toLowerCase())
-  ) : []
+  this.state.playlists.filter( playlist =>{
+    let matchesPlaylist = playlist.name.toLowerCase().includes(
+      this.state.filterString.toLowerCase())
+    let matchesSong = playlist.songs.find(song => song.name.toLowerCase()
+    .includes(this.state.filterString.toLowerCase()))
+    let matchesArtist = playlist.songs.find(song => song.artist.toLowerCase()
+    .includes(this.state.filterString.toLowerCase()))
+  return  matchesPlaylist || matchesSong || matchesArtist
+  }) : []
 
     return (
       <div className="App">
